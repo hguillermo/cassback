@@ -2,13 +2,13 @@
 # encoding: utf-8
 
 # Copyright 2012 Aaron Morton
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #   http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ from cassback.subcommands import subcommands
 # Validate - validate that all files in a backup are present
 
 class ValidateSubCommand(subcommands.SubCommand):
-    """Base for Sub Commands that watch and backup files. 
+    """Base for Sub Commands that watch and backup files.
     """
 
     log = logging.getLogger("%s.%s" % (__name__, "ListSubCommand"))
@@ -44,7 +44,7 @@ class ValidateSubCommand(subcommands.SubCommand):
             action='store_true', dest='checksum', default=False,
             help="Do an MD5 checksum of the files.")
 
-        sub_parser.add_argument('backup_name',  
+        sub_parser.add_argument('backup_name',
             help="Backup to validate.")
 
         return sub_parser
@@ -57,7 +57,7 @@ class ValidateSubCommand(subcommands.SubCommand):
         self.log.info("Starting sub command %s", self.command_name)
 
         endpoint = self._endpoint(self.args)
-        manifest = self._load_manifest_by_name(endpoint, 
+        manifest = self._load_manifest_by_name(endpoint,
             self.args.backup_name)
 
         missing_files = []
@@ -65,17 +65,17 @@ class ValidateSubCommand(subcommands.SubCommand):
         corrupt_files = []
 
         for component in manifest.iter_components():
-            
+
             # Read the backup file
             try:
                 backup_file = endpoint.read_backup_file(cassandra.BackupFile(
-                    None, component=component, md5="", 
+                    None, component=component, md5="",
                     host=manifest.host).backup_path)
             except (EnvironmentError) as e:
                 if e.errno != errno.ENOENT:
                     raise
                 # Set null so we know the file was not found
-                backup_file = None    
+                backup_file = None
 
             if backup_file is None:
                 # Could not find the meta.
@@ -84,7 +84,7 @@ class ValidateSubCommand(subcommands.SubCommand):
                 # Found the meta, and the file actually exists.
                 if not self.args.checksum:
                     present_files.append(component)
-                elif endpoint.validate_checksum(backup_file.backup_path, 
+                elif endpoint.validate_checksum(backup_file.backup_path,
                     backup_file.md5):
                     present_files.append(component)
                 else:
