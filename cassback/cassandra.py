@@ -305,7 +305,9 @@ class SSTableComponent(object):
         # Check if the path contains "snapshots"
         name_snapshot = ""
         if "snapshots" in file_path:
-            _, name_snapshot = os.path.split(file_path)
+            parts = file_path.split("/")
+            if len(parts) >= 2:
+                name_snapshot = parts[len(parts) - 2]
 
         def pop():
             """Pop from the tokens.
