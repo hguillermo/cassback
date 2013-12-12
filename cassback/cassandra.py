@@ -242,6 +242,7 @@ class SSTableComponent(object):
         self.file_path = file_path
 
         self.snapshots = props()["snapshots"]
+        self.tablename = props()["tablename"]
         self.keyspace = props()["keyspace"] if keyspace is None else keyspace
         self.cf = props()["cf"] if cf is None else cf
         self.version = props()["version"] if version is None else version
@@ -338,7 +339,7 @@ class SSTableComponent(object):
 
         properties = {
             "keyspace" :  pop() if TARGET_VERSION >= (1,1,0) else None,
-            "cf" : special_case(pop()),
+            "cf" : pop(),
             "temporary" : peek() == TEMPORARY_MARKER
         }
         if properties["temporary"]:
@@ -367,6 +368,7 @@ class SSTableComponent(object):
         properties["generation"] = int(pop())
         properties["component"] = pop()
         properties["snapshots"] = name_snapshot
+        properties["tablename"] = special_case(properties["cf"])
 
         self.log.debug("Got file properties %s from path %s", properties, file_path)
 
@@ -551,7 +553,7 @@ class BackupFile(object):
                 "hosts",
                 self.host,
                 self.component.keyspace,
-                self.component.cf,
+                self.component.tablename,
                 "snapshots",
                 self.component.snapshots,
                 self.component.backup_file_name,
