@@ -318,6 +318,7 @@ class SSTableComponent(object):
             except (IndexError):
                 raise ValueError("Not a valid SSTable file path %s" % (
                     file_path,))
+
         def peek():
             """Peeks the tokens.
             Expected a token to be there.
@@ -328,9 +329,16 @@ class SSTableComponent(object):
                 raise ValueError("Not a valid SSTable file path %s" % (
                     file_path,))
 
+        def special_case(cf):
+            if "_is_" in cf:
+                pieces = cf.split(".")
+                if len(pieces) > 0:
+                    return pieces[0]
+            return cf
+
         properties = {
             "keyspace" :  pop() if TARGET_VERSION >= (1,1,0) else None,
-            "cf" : pop(),
+            "cf" : special_case(pop()),
             "temporary" : peek() == TEMPORARY_MARKER
         }
         if properties["temporary"]:
