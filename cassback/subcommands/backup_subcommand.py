@@ -292,6 +292,9 @@ class WatchdogWatcher(events.FileSystemEventHandler):
             #if cassandra.is_snapshot_path(file_ref.stable_path):
             #    self.log.info("Ignoring snapshot path %s", file_ref.stable_path)
             #    return False
+            if not cassandra.is_snapshot_path(file_ref.stable_path):
+                #self.log.info("Ignoring non snapshot path %s", file_ref.stable_path)
+                return False
 
             try:
                 component = cassandra.SSTableComponent(file_ref.stable_path)
