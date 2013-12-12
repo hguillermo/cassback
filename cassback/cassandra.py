@@ -241,6 +241,7 @@ class SSTableComponent(object):
 
         self.file_path = file_path
 
+        self.snapshots = props()["snapshots"]
         self.keyspace = props()["keyspace"] if keyspace is None else keyspace
         self.cf = props()["cf"] if cf is None else cf
         self.version = props()["version"] if version is None else version
