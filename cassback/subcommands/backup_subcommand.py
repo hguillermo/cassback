@@ -97,6 +97,7 @@ class BackupSubCommand(subcommands.SubCommand):
         file_q = Queue.Queue()
 
         # Make a watcher
+        self.log.info("self.args.cassandra_data_dir ==> %s", self.args.cassandra_data_dir)
         watcher = WatchdogWatcher(self.args.cassandra_data_dir, file_q,
             self.args.ignore_existing, self.args.ignore_changes,
             self.args.exclude_keyspaces, self.args.include_system_keyspace)
@@ -335,6 +336,7 @@ class WatchdogWatcher(events.FileSystemEventHandler):
     # Watchdog file events.
 
     def on_created(self, event):
+        self.log.info("On Created Event ==> %s", event.src_path)
         self._maybe_queue_file(event.src_path)
         return
 
@@ -349,9 +351,9 @@ class WatchdogWatcher(events.FileSystemEventHandler):
         # a -Data.db component is deleted.
 
         file_path = event.src_path
-        if cassandra.is_snapshot_path(file_path):
-            self.log.info("Ignoring deleted snapshot path %s", file_path)
-            return
+        #if cassandra.is_snapshot_path(file_path):
+        #    self.log.info("Ignoring deleted snapshot path %s", file_path)
+        #    return
 
         try:
             component = cassandra.SSTableComponent(file_path, is_deleted=True)

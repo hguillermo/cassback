@@ -1,6 +1,8 @@
 cassback
 =========
 
+NOTE: Don't use this version. Still working on it.
+
 Tool for backing up and restoring Cassandra nodes. Based on the work by https://github.com/synack/tablesnap
 
 Theory of Operation
