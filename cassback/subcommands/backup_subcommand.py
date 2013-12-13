@@ -336,11 +336,13 @@ class WatchdogWatcher(events.FileSystemEventHandler):
     # Watchdog file events.
 
     def on_created(self, event):
-        self.log.info("On Created Event ==> %s", event.src_path)
+        self.log.info("On Created Event src_path ==> %s", event.src_path)
+        self.log.info("On Created Event ==> %s", event)
         self._maybe_queue_file(event.src_path)
         return
 
     def on_moved(self, event):
+        self.log.info("On Moved Event ==> %s", event.dest_path)
         self._maybe_queue_file(event.dest_path)
         return
 
