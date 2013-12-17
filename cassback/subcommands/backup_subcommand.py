@@ -282,9 +282,11 @@ class WatchdogWatcher(object):
 
         observer.start()
         try:
+            self.log.info("Observer running at %s", self.data_dir)
             while True:
                 time.sleep(1)
         except KeyboardInterrupt:
+            self.log.info("Observer stop at %s", self.data_dir)
             observer.stop()
         #observer.join(timeout=30)
         observer.join()
