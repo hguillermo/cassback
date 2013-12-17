@@ -27,7 +27,9 @@ import Queue
 import socket
 import time
 
-from watchdog import events, observers
+#from watchdog import events, observers
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
 
 from cassback import cassandra, dt_util, file_util
 from cassback.subcommands import subcommands
@@ -228,7 +230,7 @@ class SnapReporterThread(subcommands.SubCommandWorkerThread):
         return
 
 
-class WatchdogHandler(events.FileSystemEventHandler):
+class WatchdogHandler(FileSystemEventHandler):
     def on_created(self, event):
         self.log.info("On Created Event src_path ==> %s", event.src_path)
         self.log.info("On Created Event ==> %s", event)
@@ -272,7 +274,7 @@ class WatchdogWatcher(object):
         if self.ignore_changes:
             return
 
-        observer = observers.Observer()
+        observer = Observer()
         event_handler = WatchdogHandler()
         #observer.schedule(self, path=self.data_dir, recursive=True)
         observer.schedule(event_handler, path=self.data_dir, recursive=True)
@@ -284,10 +286,11 @@ class WatchdogWatcher(object):
                 time.sleep(1)
         except KeyboardInterrupt:
             observer.stop()
-        observer.join(timeout=30)
-        if observer.isAlive():
-            self.log.error("Watchdog Observer failed to stop. Aborting.")
-            os.kill(os.getpid(), signal.SIGKILL)
+        #observer.join(timeout=30)
+        observer.join()
+        #if observer.isAlive():
+        #    self.log.error("Watchdog Observer failed to stop. Aborting.")
+        #    os.kill(os.getpid(), signal.SIGKILL)
         return
 
     def _get_ks_manifest(self, keyspace):
