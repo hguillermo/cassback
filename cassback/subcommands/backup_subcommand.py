@@ -227,10 +227,24 @@ class SnapReporterThread(subcommands.SubCommandWorkerThread):
             time.sleep(self.interval)
         return
 
+
+class WatchdogHandler(events.FileSystemEventHandler):
+    def on_created(self, event):
+        self.log.info("On Created Event src_path ==> %s", event.src_path)
+        self.log.info("On Created Event ==> %s", event)
+        self._maybe_queue_file(event.src_path)
+        return
+
+    def on_moved(self, event):
+        self.log.info("On Moved Event ==> %s", event.dest_path)
+        self._maybe_queue_file(event.dest_path)
+        return
+
 # ============================================================================
 # Watches the files system and queue's files for backup
 
-class WatchdogWatcher(events.FileSystemEventHandler):
+#class WatchdogWatcher(events.FileSystemEventHandler):
+class WatchdogWatcher(object):
     """Watch the disk for new files."""
     log = logging.getLogger("%s.%s" % (__name__, "WatchdogWatcher"))
 
@@ -259,7 +273,9 @@ class WatchdogWatcher(events.FileSystemEventHandler):
             return
 
         observer = observers.Observer()
-        observer.schedule(self, path=self.data_dir, recursive=True)
+        event_handler = WatchdogHandler()
+        #observer.schedule(self, path=self.data_dir, recursive=True)
+        observer.schedule(event_handler, path=self.data_dir, recursive=True)
         self.log.info("Watching for new file under %s", self.data_dir)
 
         observer.start()
@@ -335,46 +351,46 @@ class WatchdogWatcher(events.FileSystemEventHandler):
     # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # Watchdog file events.
 
-    def on_created(self, event):
-        self.log.info("On Created Event src_path ==> %s", event.src_path)
-        self.log.info("On Created Event ==> %s", event)
-        self._maybe_queue_file(event.src_path)
-        return
+    #def on_created(self, event):
+    #    self.log.info("On Created Event src_path ==> %s", event.src_path)
+    #    self.log.info("On Created Event ==> %s", event)
+    #    self._maybe_queue_file(event.src_path)
+    #    return
+    #
+    #def on_moved(self, event):
+    #    self.log.info("On Moved Event ==> %s", event.dest_path)
+    #    self._maybe_queue_file(event.dest_path)
+    #    return
 
-    def on_moved(self, event):
-        self.log.info("On Moved Event ==> %s", event.dest_path)
-        self._maybe_queue_file(event.dest_path)
-        return
-
-    def on_deleted(self, event):
-
-        # Deletes happen quickly when compaction completes.
-        # Rather than do a backup for each file we only backup when
-        # a -Data.db component is deleted.
-
-        file_path = event.src_path
-        #if cassandra.is_snapshot_path(file_path):
-        #    self.log.info("Ignoring deleted snapshot path %s", file_path)
-        #    return
-
-        try:
-            component = cassandra.SSTableComponent(file_path, is_deleted=True)
-        except (ValueError):
-            self.log.info("Ignoring deleted non Cassandra file %s", file_path)
-            return
-
-        if component.component != cassandra.Components.DATA:
-            self.log.info("Ignoring deleted non %s component %s",
-                cassandra.Components.DATA, file_path)
-            return
-
-        # We want to do a backup so we know this sstable was removed.
-        ks_manifest = self._get_ks_manifest(component.keyspace)
-        ks_manifest.remove_sstable(component)
-        self.log.info("Queuing backup after deletion of %s", file_path)
-        self.file_queue.put(
-            BackupMessage(None, ks_manifest.snapshot(), component))
-        return
+    #def on_deleted(self, event):
+    #
+    #    # Deletes happen quickly when compaction completes.
+    #    # Rather than do a backup for each file we only backup when
+    #    # a -Data.db component is deleted.
+    #
+    #    file_path = event.src_path
+    #    #if cassandra.is_snapshot_path(file_path):
+    #    #    self.log.info("Ignoring deleted snapshot path %s", file_path)
+    #    #    return
+    #
+    #    try:
+    #        component = cassandra.SSTableComponent(file_path, is_deleted=True)
+    #    except (ValueError):
+    #        self.log.info("Ignoring deleted non Cassandra file %s", file_path)
+    #        return
+    #
+    #    if component.component != cassandra.Components.DATA:
+    #        self.log.info("Ignoring deleted non %s component %s",
+    #            cassandra.Components.DATA, file_path)
+    #        return
+    #
+    #    # We want to do a backup so we know this sstable was removed.
+    #    ks_manifest = self._get_ks_manifest(component.keyspace)
+    #    ks_manifest.remove_sstable(component)
+    #    self.log.info("Queuing backup after deletion of %s", file_path)
+    #    self.file_queue.put(
+    #        BackupMessage(None, ks_manifest.snapshot(), component))
+    #    return
 
 # ============================================================================
 # Message passed to the backup threads
